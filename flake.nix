@@ -33,13 +33,12 @@
             ];
 
             propagatedNativeBuildInputs = with pkgs; [
-              nodejs
-              nodePackages.npm
+              bun
             ];
 
             buildPhase = ''
-              npm install
-              npm run build
+              bun install
+              bun run build
             '';
 
             installPhase = ''
