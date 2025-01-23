@@ -32,10 +32,6 @@
             version = "0.1.0";
             src = ./.;
 
-            nativeBuildInputs = with pkgs; [
-              cacert
-            ];
-
             buildInputs = with pkgs; [
               bun
             ];
