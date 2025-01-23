@@ -39,8 +39,8 @@ pkgs.stdenv.mkDerivation {
         pkgs.bash
       ]
     }:\$PATH
-    ${npm}/bin/npx drizzle-kit push
-    ${npm}/bin/npm run start
+    npx drizzle-kit push
+    npm run start
     EOT
     chmod +x $out/bin/start
   '';
