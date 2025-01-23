@@ -4,23 +4,21 @@
 let
   pname = "binance-broker";
   version = "0.1.0";
+  nodejs = pkgs.nodejs;
+  npm = pkgs.nodePackages.npm;
   deps = pkgs.importNpmLock.buildNodeModules {
     npmRoot = ./.;
-    nodejs = pkgs.nodejs;
+    inherit nodejs;
   };
 in
 pkgs.stdenv.mkDerivation {
   inherit pname version;
   src = ./.;
 
-  buildInputs = with pkgs; [
-    nodejs
-  ];
-
   buildPhase = ''
     rm -rf node_modules
     ln -s ${deps}/node_modules .
-    npm run build
+    ${npm}/bin/npm run build
   '';
 
   installPhase = ''
@@ -32,5 +30,12 @@ pkgs.stdenv.mkDerivation {
     cp drizzle.config.ts $out
     mkdir -p $out/src/db
     cp src/db/schema.ts $out/src/db
+    mkdir -p $out/bin
+    cat << EOT > $out/bin/start
+    #! ${pkgs.bash}/bin/bash
+    ${npm}/bin/npx drizzle-kit push
+    ${npm}/bin/npm run start
+    EOT
+    chmod +x $out/bin/start
   '';
 }
