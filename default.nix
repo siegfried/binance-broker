@@ -33,6 +33,12 @@ pkgs.stdenv.mkDerivation {
     mkdir -p $out/bin
     cat << EOT > $out/bin/start
     #! ${pkgs.bash}/bin/bash
+    export PATH=${
+      pkgs.lib.makeBinPath [
+        pkgs.nodejs
+        pkgs.bash
+      ]
+    }:\$PATH
     ${npm}/bin/npx drizzle-kit push
     ${npm}/bin/npm run start
     EOT
