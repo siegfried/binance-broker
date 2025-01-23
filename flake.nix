@@ -32,7 +32,7 @@
               cacert
             ];
 
-            propagatedNativeBuildInputs = with pkgs; [
+            buildInputs = with pkgs; [
               bun
             ];
 
