@@ -21,6 +21,10 @@
         system:
         let
           pkgs = pkgsFor.${system};
+          startScriptBin = pkgs.writeShellScriptBin "start" ''
+            ${pkgs.bun}/bin/bunx drizzle-kit push
+            ${pkgs.bun}/bin/bun --bun run start
+          '';
         in
         {
           default = pkgs.stdenv.mkDerivation {
@@ -50,6 +54,8 @@
               cp drizzle.config.ts $out/app
               mkdir -p $out/app/src/db
               cp src/db/schema.ts $out/app/src/db
+              mkdir -p $out/app/bin
+              cp ${startScriptBin}/bin/start $out/app/bin
             '';
           };
         }
