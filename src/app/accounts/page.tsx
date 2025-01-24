@@ -62,7 +62,7 @@ export default async function Page({ searchParams }: SearchParamProps) {
     <div className="space-y-4">
       <div className="flex flex-row-reverse">
         <Link
-          className="bg-slate-100 rounded p-2"
+          className="bg-slate-100 rounded-sm p-2"
           href={accountPath({ modal: "new" })}>
           New Account
         </Link>
@@ -70,17 +70,17 @@ export default async function Page({ searchParams }: SearchParamProps) {
       </div>
       <div className="grid grid-cols-3 gap-4">
         {accounts.map((account) => (
-          <div className="border rounded p-4 space-y-2" key={account.id}>
+          <div className="border rounded-sm p-4 space-y-2" key={account.id}>
             <h3>{account.name}</h3>
             <div>{account.budget} for each</div>
             <div className="flex flex-row-reverse space-x-2 space-x-reverse">
               <Link
-                className="bg-slate-100 rounded p-2 text-xs"
+                className="bg-slate-100 rounded-sm p-2 text-xs"
                 href={accountPath({ modal: "delete", id: account.id.toString() })}>
                 Delete
               </Link>
               <Link
-                className="bg-slate-100 rounded p-2 text-xs"
+                className="bg-slate-100 rounded-sm p-2 text-xs"
                 href={accountPath({ modal: "edit", id: account.id.toString() })}>
                 Edit Budget
               </Link>

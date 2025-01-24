@@ -3,7 +3,7 @@ import Link from "next/link";
 
 function Navbar() {
   return (
-    <div className="max-w-screen-lg mx-auto">
+    <div className="max-w-(--breakpoint-lg) mx-auto">
       <nav className="flex flex-row">
         <Link className="p-4" href={"/"}>Home</Link>
         <Link className="p-4" href={"/accounts"}>Account</Link>
@@ -22,7 +22,7 @@ export default function RootLayout({
       <body>
         <div>
           <div className="bg-slate-100"><Navbar /></div>
-          <div className="max-w-screen-lg mx-auto p-4">
+          <div className="max-w-(--breakpoint-lg) mx-auto p-4">
             {children}
           </div>
         </div>

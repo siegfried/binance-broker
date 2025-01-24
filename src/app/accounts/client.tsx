@@ -24,31 +24,31 @@ export function NewAccountForm() {
       {state?.error && <div className='text-red-500 text-sm'>{state.error}</div>}
       <label className='block space-y-1'>
         <div>Name</div>
-        <input className='block w-full border rounded p-2' name='name' required />
+        <input className='block w-full border rounded-sm p-2' name='name' required />
         <ErrorView errors={state?.errors?.name} />
       </label>
 
       <label className='block space-y-1'>
         <div>API Key</div>
-        <input className='block w-full border rounded p-2' name='api_key' required />
+        <input className='block w-full border rounded-sm p-2' name='api_key' required />
         <ErrorView errors={state?.errors?.apiKey} />
       </label>
 
       <label className='block space-y-1'>
         <div>Secret</div>
-        <input className='block w-full border rounded p-2' name='secret' required />
+        <input className='block w-full border rounded-sm p-2' name='secret' required />
         <ErrorView errors={state?.errors?.secret} />
       </label>
 
       <label className='block space-y-1'>
         <div>Budget</div>
-        <input className='block w-full border rounded p-2' name='budget' type='number' required min={1} />
+        <input className='block w-full border rounded-sm p-2' name='budget' type='number' required min={1} />
         <ErrorView errors={state?.errors?.budget} />
       </label>
 
       <div className="flex flex-row-reverse pt-4">
-        <Link className='block bg-slate-100 rounded p-2 ml-4' href={"/accounts"}>Cancel</Link>
-        <button className='block bg-slate-100 rounded p-2' type='submit'>Create</button>
+        <Link className='block bg-slate-100 rounded-sm p-2 ml-4' href={"/accounts"}>Cancel</Link>
+        <button className='block bg-slate-100 rounded-sm p-2' type='submit'>Create</button>
       </div>
     </Form>
   )
@@ -70,7 +70,7 @@ export function EditAccountForm(props: EditAccountFormProps) {
 
       <label className='block space-y-1'>
         <div>Budget</div>
-        <input className='block w-full border rounded p-2'
+        <input className='block w-full border rounded-sm p-2'
           name='budget'
           type='number'
           required
@@ -80,8 +80,8 @@ export function EditAccountForm(props: EditAccountFormProps) {
       </label>
 
       <div className="flex flex-row-reverse pt-4">
-        <Link className='block bg-slate-100 rounded p-2 ml-4' href={"/accounts"}>Cancel</Link>
-        <button className='block bg-slate-100 rounded p-2' type='submit'>Save</button>
+        <Link className='block bg-slate-100 rounded-sm p-2 ml-4' href={"/accounts"}>Cancel</Link>
+        <button className='block bg-slate-100 rounded-sm p-2' type='submit'>Save</button>
       </div>
     </Form>
   )
@@ -101,7 +101,7 @@ export function DelAccountForm(props: DelAccountFormProps) {
       <label className='block space-y-1'>
         <div>Confirm Name</div>
         <input
-          className='block w-full border rounded p-2'
+          className='block w-full border rounded-sm p-2'
           name='name'
           required
           onChange={(e) => setName(e.target.value)}
@@ -109,9 +109,9 @@ export function DelAccountForm(props: DelAccountFormProps) {
       </label>
 
       <div className="flex flex-row-reverse space-x-2 space-x-reverse pt-4">
-        <Link className='block bg-slate-100 rounded p-2' href={"/accounts"}>Cancel</Link>
+        <Link className='block bg-slate-100 rounded-sm p-2' href={"/accounts"}>Cancel</Link>
         <button
-          className='block bg-slate-100 rounded p-2 disabled:text-gray-500'
+          className='block bg-slate-100 rounded-sm p-2 disabled:text-gray-500'
           type='submit'
           disabled={props.account.name !== name}>
           DELETE
