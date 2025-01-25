@@ -9,7 +9,7 @@ function ErrorView(props: { errors?: string[] }) {
   if (!props.errors?.length) return;
   const errors = props.errors;
   return (
-    <ul className='text-red text-sm space-y-1'>
+    <ul className='text-red-500 text-sm space-y-1'>
       {errors.map((error, index) => (
         <li key={index}>{error}</li>
       ))}
@@ -26,6 +26,16 @@ export function NewAccountForm() {
         <div>Name</div>
         <input className='block w-full border rounded-sm p-2' name='name' required />
         <ErrorView errors={state?.errors?.name} />
+      </label>
+
+      <label className='block space-y-1'>
+        <div>Interval</div>
+        <select className='block w-full border rounded-sm p-2' name='interval'>
+          <option value="1d">1 Day</option>
+          <option value="1h">1 Hour</option>
+          <option value="15m">15 Minutes</option>
+        </select>
+        <ErrorView errors={state?.errors?.interval} />
       </label>
 
       <label className='block space-y-1'>

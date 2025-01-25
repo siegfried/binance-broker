@@ -10,6 +10,7 @@ export const accountsTable = sqliteTable("account", {
   apiKey: text("api_key").notNull().unique(),
   secret: text().notNull(),
   budget: real().notNull(),
+  interval: text({ enum: ["1d", "1h", "15m"] }).notNull(),
 });
 
 export const accountsInsertSchema = createInsertSchema(accountsTable, {

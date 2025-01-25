@@ -22,6 +22,7 @@ type CreateState =
 export async function createAccount(prevState: CreateState, formData: FormData) {
   const accountParsed = accountsInsertSchema.safeParse({
     name: formData.get("name"),
+    interval: formData.get("interval"),
     apiKey: formData.get("api_key"),
     secret: formData.get("secret"),
     budget: formData.get("budget"),

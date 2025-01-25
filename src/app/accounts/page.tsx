@@ -71,8 +71,18 @@ export default async function Page({ searchParams }: SearchParamProps) {
       <div className="grid grid-cols-3 gap-4">
         {accounts.map((account) => (
           <div className="border rounded-sm p-4 space-y-2" key={account.id}>
-            <h3>{account.name}</h3>
-            <div>{account.budget} for each</div>
+            <h3 className="space-x-2">
+              <span>{account.name}</span>
+              <span className="p-1 border rounded-sm text-sm">{account.interval}</span>
+            </h3>
+            <div className="space-x-2 overflow-hidden text-sm text-ellipsis">
+              <span>Budget:</span>
+              <span className="font-semibold">{account.budget}</span> for each
+            </div>
+            <div className="space-x-2 overflow-hidden text-sm text-ellipsis">
+              <span>ApiKey:</span>
+              <span>{account.apiKey}</span>
+            </div>
             <div className="flex flex-row-reverse space-x-2 space-x-reverse">
               <Link
                 className="bg-slate-100 rounded-sm p-2 text-xs"
