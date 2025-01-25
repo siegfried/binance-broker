@@ -1,6 +1,6 @@
 import { createId } from "@paralleldrive/cuid2";
 import { sql } from "drizzle-orm";
-import { integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -31,7 +31,9 @@ export const signalsTable = sqliteTable("signal", {
   price: real().notNull(),
   status: text({ enum: ["open", "close"] }),
   side: text({ enum: ["long", "short"] }),
-});
+}, (table) => ({
+  timestamp_index: index("timestamp_index").on(table.timestamp)
+}));
 
 export const signalsInsertSchema = createInsertSchema(signalsTable, {
   timestamp: z.coerce.date(),
