@@ -5,11 +5,12 @@ export default async function Page() {
   const { info, updatedAt } = await getExchangeInfo(false);
   return (
     <div className="space-y-4">
-      <h1 className="text-lg font-bold">Exchange Info</h1>
-      <div className="flex flex-row justify-between">
-        <div>Updated at: {updatedAt.toLocaleString()}</div>
-        <form action={refreshExchangeInfo}>
-          <button className="p-2 bg-slate-100 rounded-sm">Refresh</button>
+      <div className="grid grid-cols-2">
+        <h1 className="text-xl font-bold">Exchange Info</h1>
+        <form className="flex flex-row border divide-x rounded-sm text-sm overflow-hidden" action={refreshExchangeInfo}>
+          <div className="p-2">Updated At</div>
+          <div className="p-2 grow">{updatedAt.toLocaleString()}</div>
+          <button className="p-2 bg-slate-100">Refresh</button>
         </form>
       </div>
       <div className="p-4 border rounded-sm">
