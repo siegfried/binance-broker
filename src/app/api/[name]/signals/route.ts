@@ -1,11 +1,13 @@
+import { createClientByAccount, processSignals, shouldUseTestnet } from "@/binance/usdm";
 import { db } from "@/db";
 import { accountsTable, signalsInsertSchema, signalsTable } from "@/db/schema";
 import csv from "@fast-csv/parse";
-import { createId } from "@paralleldrive/cuid2";
+import { generateNewOrderId } from "binance";
 import { eq } from "drizzle-orm/sql";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+type InsertSchema = z.infer<typeof signalsInsertSchema>;
 const contentType = z.enum(["application/csv", "text/csv"]);
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ name: string }> }) {
@@ -17,26 +19,37 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     return NextResponse.json({ error: "Invalid Content" }, { status: 400 })
   if (!request.body) return NextResponse.json({ error: "Empty Request" }, { status: 400 });
 
-  const signals: Array<z.infer<typeof signalsInsertSchema>> = [];
-
   try {
-    csv
-      .parseString(await request.text(), { headers: true })
-      .on("data", (row) => {
-        const signal = signalsInsertSchema.parse({
-          accountId: account.id,
-          clientOrderId: createId(),
-          ...row
-        });
-        signals.push(signal)
-      });
+    const newSignals = await parseCSV(account.id, await request.text());
+    if (newSignals.length <= 0) return NextResponse.json({ error: "No valid signals" }, { status: 400 });
+    const signals = await db.insert(signalsTable).values(newSignals).returning();
+    const client = createClientByAccount(account);
+    await processSignals(client, signals, account.budget, account.interval);
   } catch (error) {
     let message;
     if (error instanceof Error) message = error.message
     return NextResponse.json({ error: message }, { status: 400 });
   }
-
-  await db.insert(signalsTable).values(signals);
-
   return NextResponse.json({ message: "OK" });
+}
+
+async function parseCSV(accountId: number, text: string): Promise<InsertSchema[]> {
+  return new Promise((resolve, reject) => {
+    const signals: InsertSchema[] = [];
+    csv
+      .parseString(text, { headers: true })
+      .on("data", (row) => {
+        const clientOrderId = generateNewOrderId(shouldUseTestnet() ? "usdmtest" : "usdm");
+        const signal = signalsInsertSchema.parse({
+          accountId: accountId,
+          clientOrderId,
+          ...row
+        });
+        signals.push(signal);
+      }).on("end", () => {
+        resolve(signals);
+      }).on("error", (error) => {
+        reject(error)
+      });
+  });
 }

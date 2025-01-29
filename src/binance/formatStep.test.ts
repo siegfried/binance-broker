@@ -1,4 +1,4 @@
-import { formatStep } from './number';
+import { formatStep } from "./formatStep";
 
 describe('formatStep', () => {
   it.each([

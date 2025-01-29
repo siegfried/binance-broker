@@ -1,3 +1,4 @@
+
 export function formatStep(value: number, stepSize: string): string {
   // Extract decimal precision from stepSize string (e.g., "0.001" → 3 decimals)
   const decimals = stepSize.includes('.')

@@ -1,4 +1,3 @@
-import { sql } from "drizzle-orm";
 import { index, integer, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -20,17 +19,19 @@ export const accountsUpdateSchema = z.object({
   budget: z.coerce.number().positive(),
 });
 
+export type Account = typeof accountsTable.$inferSelect;
+
 export const signalsTable = sqliteTable("signal", {
   id: integer().primaryKey({ autoIncrement: true }),
   accountId: integer("account_id").notNull().references(() => accountsTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
-  createdAt: text().default(sql`(CURRENT_TIMESTAMP)`),
-  clientOrderId: text("client_order_id"),
+  createdAt: integer({ mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  clientOrderId: text("client_order_id").notNull(),
 
   timestamp: integer({ mode: "timestamp" }).notNull(),
   symbol: text().notNull(),
   price: real().notNull(),
-  status: text({ enum: ["open", "close"] }),
-  side: text({ enum: ["long", "short"] }),
+  status: text({ enum: ["OPEN", "CLOSE"] }).notNull(),
+  side: text({ enum: ["LONG", "SHORT"] }).notNull(),
 }, (table) => ({
   clientOrderIdIndex: index("signal_client_order_id_index").on(table.clientOrderId),
   timestampIndex: index("signal_timestamp_index").on(table.timestamp)
@@ -41,11 +42,18 @@ export const signalsInsertSchema = createInsertSchema(signalsTable, {
   price: z.coerce.number().positive(),
 })
 
-export const ordersTable = sqliteTable("order", {
+export type Signal = typeof signalsTable.$inferSelect;
+
+export const orderAttemptsTable = sqliteTable("order_attempt", {
   id: integer().primaryKey({ autoIncrement: true }),
-  accountId: integer("account_id").notNull().references(() => accountsTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  signalId: integer("signal_id").notNull().references(() => signalsTable.id, { onDelete: "cascade", onUpdate: "cascade" }),
+  createdAt: integer({ mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   clientOrderId: text("client_order_id"),
-  response: text(),
+
+  success: integer({ mode: "boolean" }).notNull(),
+  result: text({ mode: "json" }),
 }, (table) => ({
   clientOrderIdIndex: index("order_client_order_id_index").on(table.clientOrderId),
 }));
+
+export type OrderAttempt = typeof orderAttemptsTable.$inferSelect;
