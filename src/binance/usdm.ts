@@ -1,7 +1,8 @@
 import { db } from "@/db";
 import { Account, orderAttemptsTable, Signal } from "@/db/schema";
-import { FuturesExchangeInfo, USDMClient } from "binance";
+import { FuturesExchangeInfo, NewOrderResult, USDMClient } from "binance";
 import { formatStep } from "./formatStep";
+import { serializeError } from "serialize-error";
 
 export function createClientByAccount(account: Account) {
   const api_key = account.apiKey;
@@ -55,22 +56,14 @@ export function shouldUseTestnet(): boolean {
 }
 
 export async function closePositionBySignal(client: USDMClient, signal: Signal, quantity: number) {
-  let result;
-  let success;
-  try {
-    result = await client.submitNewOrder({
-      newClientOrderId: signal.clientOrderId,
-      symbol: signal.symbol,
-      type: "MARKET",
-      side: signal.side === "LONG" ? "SELL" : "BUY",
-      positionSide: signal.side,
-      quantity,
-    });
-    success = true;
-  } catch (error) {
-    result = error;
-    success = false;
-  }
+  const [success, result] = await handleOrder(client.submitNewOrder({
+    newClientOrderId: signal.clientOrderId,
+    symbol: signal.symbol,
+    type: "MARKET",
+    side: signal.side === "LONG" ? "SELL" : "BUY",
+    positionSide: signal.side,
+    quantity,
+  }));
   await db.insert(orderAttemptsTable).values({
     signalId: signal.id,
     clientOrderId: signal.clientOrderId,
@@ -100,25 +93,17 @@ export async function closePositionsBySignals(client: USDMClient, signals: Signa
 };
 
 export async function openPositionBySignal(client: USDMClient, signal: Signal, price: number, quantity: number, interval: Interval) {
-  let result;
-  let success;
-  try {
-    result = await client.submitNewOrder({
-      newClientOrderId: signal.clientOrderId,
-      symbol: signal.symbol,
-      type: "LIMIT",
-      side: signal.side === "LONG" ? "BUY" : "SELL",
-      positionSide: signal.side,
-      price,
-      quantity,
-      timeInForce: "GTD",
-      goodTillDate: goodTillDate(signal.timestamp, ms(interval)),
-    });
-    success = true;
-  } catch (error) {
-    result = error;
-    success = false;
-  }
+  const [success, result] = await handleOrder(client.submitNewOrder({
+    newClientOrderId: signal.clientOrderId,
+    symbol: signal.symbol,
+    type: "LIMIT",
+    side: signal.side === "LONG" ? "BUY" : "SELL",
+    positionSide: signal.side,
+    price,
+    quantity,
+    timeInForce: "GTD",
+    goodTillDate: goodTillDate(signal.timestamp, ms(interval)),
+  }));
   await db.insert(orderAttemptsTable).values({
     signalId: signal.id,
     clientOrderId: signal.clientOrderId,
@@ -174,4 +159,12 @@ export async function processSignals(client: USDMClient, signals: Signal[], budg
     closePositionsBySignals(client, closeSignals),
     openPositionsBySignals(client, openSignals, budget, interval),
   ]);
+}
+
+async function handleOrder(order: Promise<NewOrderResult>) {
+  try {
+    return [true, await order] as const;
+  } catch (error) {
+    return [false, serializeError(error)] as const;
+  }
 }
