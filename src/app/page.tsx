@@ -74,14 +74,18 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
     rowsQuery = rowsQuery.where(eq(accountsTable.id, parseInt(account_id)))
   }
   const rows = await rowsQuery;
-  const aggRows = Object.values(
-    rows.reduce<Record<number, { signal: Signal, account: Account, orderAttempts: OrderAttempt[] }>>((acc, row) => {
+  let aggRows = Array.from(
+    rows.reduce<Map<number, { signal: Signal, account: Account, orderAttempts: OrderAttempt[] }>>((acc, row) => {
       const { account, signal, orderAttempt } = row;
-      acc[signal.id] ??= { account, signal, orderAttempts: [] };
-      if (orderAttempt)
-        acc[signal.id].orderAttempts.push(orderAttempt);
+      if (!acc.has(signal.id)) {
+        acc.set(signal.id, { signal, account, orderAttempts: [] });
+      }
+      if (orderAttempt) {
+        acc.get(signal.id)!.orderAttempts.push(orderAttempt);
+      }
       return acc;
-    }, {}));
+    }, new Map()).values()
+  );
   const accounts = Object.values(aggRows.reduce<Record<number, Account>>((acc, { account }) => {
     acc[account.id] = account;
     return acc;
