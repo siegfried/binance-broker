@@ -82,7 +82,7 @@ export async function closePositionsBySignals(client: USDMClient, signals: Signa
     if (typeof quantity === "string") {
       quantity = parseFloat(quantity);
     }
-    quantity = Math.abs(quantity); // Short positions returns negative number.
+    quantity = Math.abs(quantity); // Short positions return negative number.
 
     tasks.push(closePositionBySignal(client, signal, quantity));
 
