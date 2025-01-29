@@ -1,16 +1,35 @@
 'use client'
 
 import type { Account, OrderAttempt, Signal } from "@/db/schema";
-import { ReactNode, useState } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { handleSignals } from "./accounts/actions";
 import { isExpired, ms } from "@/binance/usdm";
+import { createPortal } from "react-dom";
+
+function Portal(props: { children: ReactNode }) {
+  const { children } = props;
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+    return () => setMounted(false);
+  }, [])
+  if (!mounted) return;
+  const root = document.querySelector("#portal-root");
+  if (!root) {
+    console.error("No #portal-root found");
+    return;
+  };
+  return createPortal(children, root);
+}
 
 export function Modal(props: { children: ReactNode }) {
   const { children } = props;
   return (
-    <div className="absolute inset-0 bg-black/50">
-      <div className="max-w-3xl mx-auto mt-20 rounded-sm bg-white overflow-hidden">{children}</div>
-    </div >
+    <Portal>
+      <div className="absolute inset-0 bg-black/50">
+        <div className="max-w-3xl mx-auto mt-20 rounded-sm bg-white overflow-hidden">{children}</div>
+      </div >
+    </Portal>
   )
 }
 
@@ -30,7 +49,7 @@ function OrderAttemptList(props: { orderAttempts: OrderAttempt[] }) {
             <div>{createdAt.toLocaleString()}</div>
           </div>
           {openIndex === index && <div className="p-2">
-            <code className="font-mono">
+            <code className="font-mono text-xs">
               <pre className="h-96 overflow-auto">{JSON.stringify(result, null, 2)}</pre>
             </code>
           </div>}
