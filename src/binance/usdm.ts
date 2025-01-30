@@ -1,8 +1,9 @@
 import { db } from "@/db";
-import { Account, orderAttemptsTable, Signal } from "@/db/schema";
+import { Account, accountsTable, orderAttemptsTable, Signal, signalsTable } from "@/db/schema";
 import { FuturesExchangeInfo, NewOrderResult, USDMClient } from "binance";
 import { formatStep } from "./formatStep";
 import { serializeError } from "serialize-error";
+import { eq, inArray } from "drizzle-orm";
 
 export function createClientByAccount(account: Account) {
   const api_key = account.apiKey;
@@ -55,7 +56,7 @@ export function shouldUseTestnet(): boolean {
   return process.env.BINANCE_TESTNET === "YES";
 }
 
-export async function closePositionBySignal(client: USDMClient, signal: Signal, quantity: number) {
+async function closePositionBySignal(client: USDMClient, signal: Signal, quantity: number) {
   const [success, result] = await handleOrder(client.submitNewOrder({
     newClientOrderId: signal.clientOrderId,
     symbol: signal.symbol,
@@ -72,7 +73,7 @@ export async function closePositionBySignal(client: USDMClient, signal: Signal, 
   });
 };
 
-export async function closePositionsBySignals(client: USDMClient, signals: Signal[]) {
+async function closePositionsBySignals(client: USDMClient, signals: Signal[]) {
   const positions = await client.getPositionsV3();
 
   const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
@@ -92,7 +93,7 @@ export async function closePositionsBySignals(client: USDMClient, signals: Signa
   return Promise.allSettled(tasks);
 };
 
-export async function openPositionBySignal(client: USDMClient, signal: Signal, price: number, quantity: number, interval: Interval) {
+async function openPositionBySignal(client: USDMClient, signal: Signal, price: number, quantity: number, interval: Interval) {
   const [success, result] = await handleOrder(client.submitNewOrder({
     newClientOrderId: signal.clientOrderId,
     symbol: signal.symbol,
@@ -118,7 +119,7 @@ function goodTillDate(timestamp: Date, durationInMs: number): number {
 
 export type Interval = "15m" | "1h" | "1d";
 
-export async function openPositionsBySignals(client: USDMClient, signals: Signal[], budget: number, interval: Interval) {
+async function openPositionsBySignals(client: USDMClient, signals: Signal[], budget: number, interval: Interval) {
   const { priceFilterStepMap, quantityFilterStepMap } = await getExchangeInfo(false);
 
   const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
@@ -159,6 +160,27 @@ export async function processSignals(client: USDMClient, signals: Signal[], budg
     closePositionsBySignals(client, closeSignals),
     openPositionsBySignals(client, openSignals, budget, interval),
   ]);
+}
+
+export async function processSignalsByIds(ids: number[]) {
+  const rows = await db
+    .select()
+    .from(signalsTable)
+    .innerJoin(accountsTable, eq(signalsTable.accountId, accountsTable.id))
+    .where(inArray(signalsTable.id, ids));
+
+  const aggRows = rows.reduce<Record<number, { account: Account, signals: Signal[] }>>((acc, { account, signal }) => {
+    acc[account.id] ??= { account, signals: [] };
+    acc[account.id].signals.push(signal);
+    return acc;
+  }, {});
+
+  const tasks = Object.values(aggRows).map(async ({ account, signals }) => {
+    const client = createClientByAccount(account);
+    await processSignals(client, signals, account.budget, account.interval);
+  });
+
+  await Promise.allSettled(tasks);
 }
 
 async function handleOrder(order: Promise<NewOrderResult>) {

@@ -74,7 +74,7 @@ export default async function Home({ searchParams }: { searchParams: Promise<{ a
     rowsQuery = rowsQuery.where(eq(accountsTable.id, parseInt(account_id)))
   }
   const rows = await rowsQuery;
-  let aggRows = Array.from(
+  const aggRows = Array.from(
     rows.reduce<Map<number, { signal: Signal, account: Account, orderAttempts: OrderAttempt[] }>>((acc, row) => {
       const { account, signal, orderAttempt } = row;
       if (!acc.has(signal.id)) {

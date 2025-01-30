@@ -1,10 +1,9 @@
 'use server'
 
-import { createClientByAccount, processSignals } from "@/binance/usdm";
+import { processSignalsByIds } from "@/binance/usdm";
 import { db } from "@/db";
-import { Account, accountsInsertSchema, accountsTable, accountsUpdateSchema, Signal, signalsTable } from "@/db/schema";
+import { accountsInsertSchema, accountsTable, accountsUpdateSchema } from "@/db/schema";
 import { eq } from "drizzle-orm";
-import { inArray } from "drizzle-orm/sql/expressions";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 
@@ -78,22 +77,6 @@ export async function deleteAccount(formData: FormData) {
 export async function handleSignals(formData: FormData) {
   const idsParsed = z.array(z.coerce.number()).safeParse(formData.getAll("id"));
   if (!idsParsed.success) redirect("/");
-
-  const rows = await db
-    .select()
-    .from(signalsTable)
-    .innerJoin(accountsTable, eq(signalsTable.accountId, accountsTable.id))
-    .where(inArray(signalsTable.id, idsParsed.data));
-  const aggRows = rows.reduce<Record<number, { account: Account, signals: Signal[] }>>((acc, { account, signal }) => {
-    acc[account.id] ??= { account, signals: [] };
-    acc[account.id].signals.push(signal);
-    return acc;
-  }, {});
-
-  const tasks = Object.values(aggRows).map(async ({ account, signals }) => {
-    const client = createClientByAccount(account);
-    await processSignals(client, signals, account.budget, account.interval);
-  });
-  await Promise.allSettled(tasks);
+  processSignalsByIds(idsParsed.data);
   redirect("/");
 }
