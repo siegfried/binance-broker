@@ -47,12 +47,12 @@ export function AccountView(props: { account: Account }) {
       <div className="flex flex-row space-x-2 justify-end">
         <button
           onClick={() => setModal("edit")}
-          className="bg-slate-100 rounded-sm p-2">
+          className="bg-slate-100 border rounded-sm p-2">
           Edit
         </button>
         <button
           onClick={() => setModal("delete")}
-          className="bg-slate-100 rounded-sm p-2">
+          className="bg-slate-100 border rounded-sm p-2">
           Delete
         </button>
       </div>

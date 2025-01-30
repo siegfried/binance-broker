@@ -9,7 +9,7 @@ export default async function Page() {
     <div className="space-y-4">
       <div className="flex flex-row-reverse">
         <NewAccountButton
-          className="bg-slate-100 rounded-sm p-2">
+          className="bg-slate-100 border rounded-sm p-2">
           New Account
         </NewAccountButton>
       </div>
