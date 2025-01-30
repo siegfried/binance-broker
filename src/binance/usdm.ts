@@ -2,8 +2,8 @@ import { db } from "@/db";
 import { Account, accountsTable, orderAttemptsTable, Signal, signalsTable } from "@/db/schema";
 import { FuturesExchangeInfo, NewOrderResult, USDMClient } from "binance";
 import { formatStep } from "./formatStep";
-import { serializeError } from "serialize-error";
 import { eq, inArray } from "drizzle-orm";
+import { tryAndLogError, tryExec } from "@/error";
 
 export function createClientByAccount(account: Account) {
   const api_key = account.apiKey;
@@ -69,9 +69,9 @@ async function closePositionBySignal(client: USDMClient, signal: Signal, quantit
 };
 
 async function closePositionsBySignals(client: USDMClient, signals: Signal[]) {
-  const positions = await client.getPositionsV3();
+  const [success, positions] = await tryAndLogError(client.getPositionsV3());
 
-  const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
+  const tasks = success ? signals.reduce<Promise<void>[]>((tasks, signal) => {
     let quantity = positions
       .find((position) => position.symbol === signal.symbol && position.positionSide === signal.side)?.positionAmt;
     if (!quantity) return tasks;
@@ -83,7 +83,7 @@ async function closePositionsBySignals(client: USDMClient, signals: Signal[]) {
     tasks.push(closePositionBySignal(client, signal, quantity));
 
     return tasks;
-  }, []);
+  }, []) : [];
 
   return Promise.allSettled(tasks);
 };
@@ -110,9 +110,10 @@ function goodTillDate(timestamp: Date, durationInMs: number): number {
 export type Interval = "15m" | "1h" | "1d";
 
 async function openPositionsBySignals(client: USDMClient, signals: Signal[], budget: number, interval: Interval) {
-  const { priceFilterStepMap, quantityFilterStepMap } = await getExchangeInfo(false);
+  const [success, result] = await tryAndLogError(getExchangeInfo(false));
 
-  const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
+  const tasks = success ? signals.reduce<Promise<void>[]>((tasks, signal) => {
+    const { priceFilterStepMap, quantityFilterStepMap } = result;
     if (isExpired(signal.timestamp, new Date(), ms(interval))) return tasks;
     const priceStep = priceFilterStepMap.get(signal.symbol);
     if (!priceStep) return tasks;
@@ -124,7 +125,7 @@ async function openPositionsBySignals(client: USDMClient, signals: Signal[], bud
     tasks.push(openPositionBySignal(client, signal, price, quantity, interval));
 
     return tasks;
-  }, []);
+  }, []) : [];
 
   return Promise.allSettled(tasks);
 };
@@ -145,9 +146,10 @@ async function takeProfitBySignal(client: USDMClient, signal: Signal, price: num
 }
 
 async function takeProfitBySignals(client: USDMClient, signals: Signal[], interval: Interval) {
-  const { priceFilterStepMap } = await getExchangeInfo(false);
+  const [success, result] = await tryAndLogError(getExchangeInfo(false));
 
-  const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
+  const tasks = success ? signals.reduce<Promise<void>[]>((tasks, signal) => {
+    const { priceFilterStepMap } = result;
     if (isExpired(signal.timestamp, new Date(), ms(interval))) return tasks;
     const priceStep = priceFilterStepMap.get(signal.symbol);
     if (!priceStep) return tasks;
@@ -156,7 +158,7 @@ async function takeProfitBySignals(client: USDMClient, signals: Signal[], interv
     tasks.push(takeProfitBySignal(client, signal, price, interval));
 
     return tasks;
-  }, []);
+  }, []) : [];
 
   return Promise.allSettled(tasks);
 }
@@ -218,16 +220,8 @@ export async function processSignalsByIds(ids: number[]) {
   await Promise.allSettled(tasks);
 }
 
-async function placeOrder(order: Promise<NewOrderResult>) {
-  try {
-    return [true, await order] as const;
-  } catch (error) {
-    return [false, serializeError(error)] as const;
-  }
-}
-
 async function handleOrder(signal: Signal, order: Promise<NewOrderResult>) {
-  const [success, result] = await placeOrder(order);
+  const [success, result] = await tryExec(order);
   await db.insert(orderAttemptsTable).values({
     signalId: signal.id,
     clientOrderId: signal.clientOrderId,
