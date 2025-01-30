@@ -16,7 +16,7 @@ function SignalView(props: { rows: { signal: Signal, account: Account, orderAtte
             <th className="p-2">Symbol</th>
             <th className="p-2">Timestamp</th>
             <th className="p-2">Price</th>
-            <th className="p-2">Status</th>
+            <th className="p-2">Type</th>
             <th className="p-2">Side</th>
             <th className="p-2">Account</th>
             <th className="p-2">Order</th>
@@ -27,7 +27,7 @@ function SignalView(props: { rows: { signal: Signal, account: Account, orderAtte
             <td className="p-2">{signal.symbol}</td>
             <td className="p-2">{signal.timestamp.toISOString()}</td>
             <td className="p-2 text-right">{signal.price}</td>
-            <td className="p-2">{signal.status}</td>
+            <td className="p-2">{signal.type}</td>
             <td className="p-2">{signal.side}</td>
             <td className="p-2">{account.name}</td>
             <td>

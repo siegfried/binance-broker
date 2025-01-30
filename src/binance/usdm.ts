@@ -153,8 +153,8 @@ export function isExpired(timestamp: Date, durationInMs: number): boolean {
 }
 
 export async function processSignals(client: USDMClient, signals: Signal[], budget: number, interval: Interval) {
-  const openSignals = signals.filter((signal) => signal.status === "OPEN");
-  const closeSignals = signals.filter((signal) => signal.status === "CLOSE");
+  const openSignals = signals.filter((signal) => signal.type === "OPEN");
+  const closeSignals = signals.filter((signal) => signal.type === "CLOSE");
 
   await Promise.allSettled([
     closePositionsBySignals(client, closeSignals),
