@@ -1,8 +1,8 @@
 'use client'
 
 import type { Account, OrderAttempt, Signal } from "@/db/schema";
-import { ReactNode, useEffect, useState } from "react";
-import { handleSignals } from "./actions";
+import { ReactNode, useEffect, useMemo, useState } from "react";
+import { deleteOutdatedSignals, handleSignals } from "./actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
 import { XMarkIcon } from "@heroicons/react/24/solid";
@@ -71,8 +71,8 @@ function OrderAttemptList(props: { orderAttempts: OrderAttempt[] }) {
   )
 }
 
-export function OrderAttemptView(props: { className?: string, account: Account, signal: Signal, orderAttempts: OrderAttempt[] }) {
-  const { className, account, signal, orderAttempts } = props;
+export function OrderAttemptView(props: { className?: string, account: Account, signal: Signal, orderAttempts: OrderAttempt[], outdated: boolean }) {
+  const { className, signal, orderAttempts, outdated } = props;
   const [modal, setModal] = useState(false);
   const anySuccess = !!orderAttempts.find(({ success }) => success);
   return (
@@ -88,15 +88,119 @@ export function OrderAttemptView(props: { className?: string, account: Account, 
           <div className="flex flex-row justify-end space-x-2">
             <form action={handleSignals}>
               <input name="id" type="hidden" value={signal.id} />
-              <button
-                className="p-2 bg-slate-100 rounded-sm disabled:text-gray-500"
-                disabled={isExpired(signal.timestamp, ms(account.interval))}>
+              {!outdated && <button className="p-2 bg-slate-100 rounded-sm disabled:text-gray-500">
                 Retry
-              </button>
+              </button>}
             </form>
           </div>
         </div>
       </Modal>}
     </>
+  )
+}
+
+type AggRows = { signal: Signal, account: Account, orderAttempts: OrderAttempt[] };
+function SignalsTable(props: { rows: AggRows[], outdated: boolean }) {
+  const { rows, outdated } = props;
+  if (rows.length <= 0) return;
+  return (
+    <div className="border rounded-sm overflow-hidden">
+      <table className="table-auto w-full divide-y-1">
+        <thead className="bg-slate-100">
+          <tr>
+            <th className="p-2">Symbol</th>
+            <th className="p-2">Timestamp</th>
+            <th className="p-2">Price</th>
+            <th className="p-2">Type</th>
+            <th className="p-2">Side</th>
+            <th className="p-2">Account</th>
+            <th className="p-2">Order</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y">
+          {rows.map(({ signal, account, orderAttempts }) => (<tr key={signal.id} className="divide-x">
+            <td className="p-2">{signal.symbol}</td>
+            <td className="p-2">{signal.timestamp.toISOString()}</td>
+            <td className="p-2 text-right">{signal.price}</td>
+            <td className="p-2">{signal.type}</td>
+            <td className="p-2">{signal.side}</td>
+            <td className="p-2">{account.name}</td>
+            <td>
+              <OrderAttemptView
+                className="w-full p-2 text-right"
+                outdated={outdated}
+                account={account}
+                signal={signal}
+                orderAttempts={orderAttempts} />
+            </td>
+          </tr>))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export function SignalsView(props: { rows: { signal: Signal, account: Account, orderAttempt: OrderAttempt | null }[] }) {
+  const [time, setTime] = useState<Date | undefined>();
+  const [tab, setTab] = useState<"current" | "outdated">("current");
+  const rows = useMemo(() => {
+    if (!time) return;
+
+    const aggRows =
+      props.rows.reduce<Map<number, AggRows>>((acc, row) => {
+        const { account, signal, orderAttempt } = row;
+        const expired = isExpired(signal.timestamp, time, ms(account.interval));
+
+        if (tab === "current" && expired) return acc;
+        if (tab === "outdated" && !expired) return acc;
+
+        if (!acc.has(signal.id)) {
+          acc.set(signal.id, { signal, account, orderAttempts: [] });
+        }
+        if (orderAttempt) {
+          acc.get(signal.id)!.orderAttempts.push(orderAttempt);
+        }
+
+        return acc;
+      }, new Map())
+
+    return Array.from(aggRows.values())
+  }, [props.rows, tab, time]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [])
+
+  if (!time) return;
+  if (!rows) return;
+
+  return (
+    <div className="space-y-2">
+      <div className="flex flex-row justify-between">
+        <div className="flex flex-row space-x-2">
+          <button
+            onClick={() => setTab("current")}
+            className={`p-2 border rounded-sm ${tab !== "current" && "bg-slate-100"}`}>
+            Current
+          </button>
+          <button
+            onClick={() => setTab("outdated")}
+            className={`p-2 border rounded-sm ${tab !== "outdated" && "bg-slate-100"}`}>
+            Outdated
+          </button>
+        </div>
+        <div className="p-2 text-lg">
+          {time?.toISOString()}
+        </div>
+        <form action={deleteOutdatedSignals}>
+          <button className="p-2 bg-slate-100 border rounded-sm">Clear Outdated</button>
+        </form>
+      </div>
+      <SignalsTable rows={rows} outdated={tab === "outdated"} />
+    </div>
   )
 }

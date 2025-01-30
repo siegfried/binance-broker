@@ -111,7 +111,7 @@ async function openPositionsBySignals(client: USDMClient, signals: Signal[], bud
   const { priceFilterStepMap, quantityFilterStepMap } = await getExchangeInfo(false);
 
   const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
-    if (isExpired(signal.timestamp, ms(interval))) return tasks;
+    if (isExpired(signal.timestamp, new Date(), ms(interval))) return tasks;
     const priceStep = priceFilterStepMap.get(signal.symbol);
     if (!priceStep) return tasks;
     const quantityStep = quantityFilterStepMap.get(signal.symbol);
@@ -145,7 +145,7 @@ async function takeProfitBySignals(client: USDMClient, signals: Signal[], interv
   const { priceFilterStepMap } = await getExchangeInfo(false);
 
   const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
-    if (isExpired(signal.timestamp, ms(interval))) return tasks;
+    if (isExpired(signal.timestamp, new Date(), ms(interval))) return tasks;
     const priceStep = priceFilterStepMap.get(signal.symbol);
     if (!priceStep) return tasks;
     const price = parseFloat(formatStep(signal.price, priceStep));
@@ -166,8 +166,7 @@ export function ms(durationStr: Interval) {
   }
 }
 
-export function isExpired(timestamp: Date, durationInMs: number): boolean {
-  const now = new Date();
+export function isExpired(timestamp: Date, now: Date, durationInMs: number): boolean {
   return now.getTime() - timestamp.getTime() > durationInMs
 }
 
