@@ -2,7 +2,7 @@
 
 import type { Account, OrderAttempt, Signal } from "@/db/schema";
 import { ReactNode, useEffect, useState } from "react";
-import { handleSignals } from "./accounts/actions";
+import { handleSignals } from "./actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
 import { XMarkIcon } from "@heroicons/react/24/solid";

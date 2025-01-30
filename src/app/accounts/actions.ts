@@ -1,6 +1,5 @@
 'use server'
 
-import { processSignalsByIds } from "@/binance/usdm";
 import { db } from "@/db";
 import { accountsInsertSchema, accountsTable, accountsUpdateSchema } from "@/db/schema";
 import { eq } from "drizzle-orm";
@@ -72,11 +71,4 @@ export async function deleteAccount(formData: FormData) {
     await db.delete(accountsTable).where(eq(accountsTable.name, nameParsed.data));
   }
   redirect("/accounts");
-}
-
-export async function handleSignals(formData: FormData) {
-  const idsParsed = z.array(z.coerce.number()).safeParse(formData.getAll("id"));
-  if (!idsParsed.success) redirect("/");
-  processSignalsByIds(idsParsed.data);
-  redirect("/");
 }
