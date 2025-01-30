@@ -5,6 +5,7 @@ import { ReactNode, useEffect, useState } from "react";
 import { handleSignals } from "./accounts/actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
+import { XMarkIcon } from "@heroicons/react/24/solid";
 
 function Portal(props: { children: ReactNode }) {
   const { children } = props;
@@ -22,12 +23,24 @@ function Portal(props: { children: ReactNode }) {
   return createPortal(children, root);
 }
 
-export function Modal(props: { children: ReactNode }) {
-  const { children } = props;
+export function Modal(props: { children: ReactNode, onCancel?: () => void }) {
+  const { children, onCancel } = props;
   return (
     <Portal>
       <div className="absolute inset-0 bg-black/50">
-        <div className="max-w-3xl mx-auto mt-20 rounded-sm bg-white overflow-hidden">{children}</div>
+        <div className="max-w-3xl mx-auto mt-20 rounded-sm bg-white overflow-hidden">
+          {onCancel && <div className="divide-y">
+            <div className="flex flex-row justify-end bg-slate-100">
+              <button
+                onClick={onCancel}
+                className="p-2 cursor-pointer">
+                <XMarkIcon className="size-4" />
+              </button>
+            </div>
+            {children}
+          </div>}
+          {!onCancel && children}
+        </div>
       </div >
     </Portal>
   )

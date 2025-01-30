@@ -2,8 +2,73 @@
 
 import Form from 'next/form';
 import { createAccount, deleteAccount, updateAccount } from './actions';
-import { useActionState, useState } from 'react';
-import Link from 'next/link';
+import { ReactNode, useActionState, useState } from 'react';
+import type { Account } from '@/db/schema';
+import { Modal } from '../client';
+
+export function NewAccountButton(props: { className?: string, children: ReactNode }) {
+  const { className, children } = props;
+  const [modal, setModal] = useState(false);
+
+  return (
+    <>
+      <button
+        onClick={() => setModal(true)}
+        className={className}>
+        {children}
+      </button>
+      {modal && <Modal onCancel={() => setModal(false)}>
+        <div className="p-4 text-sm">
+          <NewAccountForm />
+        </div>
+      </Modal>}
+    </>
+  )
+}
+
+export function AccountView(props: { account: Account }) {
+  const { account } = props;
+  const [modal, setModal] = useState<"edit" | "delete" | null>(null);
+
+  return (
+    <div className="border rounded-sm p-4 space-y-2 text-sm" key={account.id}>
+      <h3 className="space-x-2">
+        <span>{account.name}</span>
+        <span className="p-1 border rounded-sm">{account.interval}</span>
+      </h3>
+      <div className="space-x-2 overflow-hidden text-ellipsis">
+        <span>Budget:</span>
+        <span className="font-semibold">{account.budget}</span> for each
+      </div>
+      <div className="space-x-2 overflow-hidden text-ellipsis">
+        <span>ApiKey:</span>
+        <span>{account.apiKey}</span>
+      </div>
+      <div className="flex flex-row space-x-2 justify-end">
+        <button
+          onClick={() => setModal("edit")}
+          className="bg-slate-100 rounded-sm p-2">
+          Edit
+        </button>
+        <button
+          onClick={() => setModal("delete")}
+          className="bg-slate-100 rounded-sm p-2">
+          Delete
+        </button>
+      </div>
+      {modal === "edit" && <Modal onCancel={() => setModal(null)}>
+        <div className="p-4 text-sm">
+          <EditAccountForm account={account} />
+        </div>
+      </Modal>}
+      {modal === "delete" && <Modal onCancel={() => setModal(null)}>
+        <div className="p-4 text-sm">
+          <DelAccountForm account={account} />
+        </div>
+      </Modal>}
+    </div>
+  )
+}
 
 function ErrorView(props: { errors?: string[] }) {
   if (!props.errors?.length) return;
@@ -57,7 +122,6 @@ export function NewAccountForm() {
       </label>
 
       <div className="flex flex-row-reverse pt-4">
-        <Link className='block bg-slate-100 rounded-sm p-2 ml-4' href={"/accounts"}>Cancel</Link>
         <button className='block bg-slate-100 rounded-sm p-2' type='submit'>Create</button>
       </div>
     </Form>
@@ -71,7 +135,7 @@ type EditAccountFormProps = {
   }
 };
 
-export function EditAccountForm(props: EditAccountFormProps) {
+function EditAccountForm(props: EditAccountFormProps) {
   const [state, formAction] = useActionState(updateAccount, null);
   return (
     <Form className='space-y-2' action={formAction}>
@@ -90,7 +154,6 @@ export function EditAccountForm(props: EditAccountFormProps) {
       </label>
 
       <div className="flex flex-row-reverse pt-4">
-        <Link className='block bg-slate-100 rounded-sm p-2 ml-4' href={"/accounts"}>Cancel</Link>
         <button className='block bg-slate-100 rounded-sm p-2' type='submit'>Save</button>
       </div>
     </Form>
@@ -103,7 +166,7 @@ type DelAccountFormProps = {
   }
 };
 
-export function DelAccountForm(props: DelAccountFormProps) {
+function DelAccountForm(props: DelAccountFormProps) {
   const [name, setName] = useState("");
 
   return (
@@ -119,7 +182,6 @@ export function DelAccountForm(props: DelAccountFormProps) {
       </label>
 
       <div className="flex flex-row-reverse space-x-2 space-x-reverse pt-4">
-        <Link className='block bg-slate-100 rounded-sm p-2' href={"/accounts"}>Cancel</Link>
         <button
           className='block bg-slate-100 rounded-sm p-2 disabled:text-gray-500'
           type='submit'
