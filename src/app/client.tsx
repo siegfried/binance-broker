@@ -73,17 +73,17 @@ function OrderAttemptList(props: { orderAttempts: OrderAttempt[] }) {
 
 export function OrderAttemptView(props: { className?: string, account: Account, signal: Signal, orderAttempts: OrderAttempt[] }) {
   const { className, account, signal, orderAttempts } = props;
-  const [show, setShow] = useState(false);
+  const [modal, setModal] = useState(false);
   const anySuccess = !!orderAttempts.find(({ success }) => success);
   return (
     <>
-      <button className={className} onClick={() => setShow(true)}>
+      <button className={className} onClick={() => setModal(true)}>
         <span className={anySuccess ? "text-green-500" : "text-red-500"}>
           {orderAttempts.length}
         </span>
       </button>
-      {show && <Modal>
-        <div className="p-4 space-y-2">
+      {modal && <Modal onCancel={() => setModal(false)}>
+        <div className="p-4 space-y-2 text-sm">
           <OrderAttemptList orderAttempts={orderAttempts} />
           <div className="flex flex-row justify-end space-x-2">
             <form action={handleSignals}>
@@ -94,7 +94,6 @@ export function OrderAttemptView(props: { className?: string, account: Account, 
                 Retry
               </button>
             </form>
-            <button className="p-2 bg-slate-100 rounded-sm" onClick={() => setShow(false)}>Cancel</button>
           </div>
         </div>
       </Modal>}
