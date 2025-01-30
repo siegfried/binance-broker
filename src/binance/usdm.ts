@@ -57,6 +57,7 @@ export function shouldUseTestnet(): boolean {
 }
 
 async function closePositionBySignal(client: USDMClient, signal: Signal, quantity: number) {
+  if (signal.type !== "CLOSE") return;
   await handleOrder(signal, client.submitNewOrder({
     newClientOrderId: signal.clientOrderId,
     symbol: signal.symbol,
@@ -88,6 +89,7 @@ async function closePositionsBySignals(client: USDMClient, signals: Signal[]) {
 };
 
 async function openPositionBySignal(client: USDMClient, signal: Signal, price: number, quantity: number, interval: Interval) {
+  if (signal.type !== "OPEN") return;
   await handleOrder(signal, client.submitNewOrder({
     newClientOrderId: signal.clientOrderId,
     symbol: signal.symbol,
@@ -128,6 +130,7 @@ async function openPositionsBySignals(client: USDMClient, signals: Signal[], bud
 };
 
 async function takeProfitBySignal(client: USDMClient, signal: Signal, price: number, interval: Interval) {
+  if (signal.type !== "TP") return;
   await handleOrder(signal, client.submitNewOrder({
     newClientOrderId: signal.clientOrderId,
     symbol: signal.symbol,
@@ -170,10 +173,22 @@ export function isExpired(timestamp: Date, now: Date, durationInMs: number): boo
   return now.getTime() - timestamp.getTime() > durationInMs
 }
 
+type CategorizedSignals = {
+  openSignals: Signal[],
+  closeSignals: Signal[],
+  takeProfitSignals: Signal[],
+}
+function categorizeSignals(signals: Signal[]) {
+  return signals.reduce<CategorizedSignals>((result, signal) => {
+    if (signal.type === "OPEN") result.openSignals.push(signal);
+    if (signal.type === "CLOSE") result.closeSignals.push(signal);
+    if (signal.type === "TP") result.takeProfitSignals.push(signal);
+    return result;
+  }, { openSignals: [], closeSignals: [], takeProfitSignals: [] })
+}
+
 export async function processSignals(client: USDMClient, signals: Signal[], budget: number, interval: Interval) {
-  const openSignals = signals.filter((signal) => signal.type === "OPEN");
-  const closeSignals = signals.filter((signal) => signal.type === "CLOSE");
-  const takeProfitSignals = signals.filter((signal) => signal.type === "TP");
+  const { closeSignals, openSignals, takeProfitSignals } = categorizeSignals(signals);
 
   await Promise.allSettled([
     closePositionsBySignals(client, closeSignals),
