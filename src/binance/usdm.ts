@@ -57,7 +57,7 @@ export function shouldUseTestnet(): boolean {
 }
 
 async function closePositionBySignal(client: USDMClient, signal: Signal, quantity: number) {
-  const [success, result] = await handleOrder(client.submitNewOrder({
+  await handleOrder(signal, client.submitNewOrder({
     newClientOrderId: signal.clientOrderId,
     symbol: signal.symbol,
     type: "MARKET",
@@ -65,12 +65,6 @@ async function closePositionBySignal(client: USDMClient, signal: Signal, quantit
     positionSide: signal.side,
     quantity,
   }));
-  await db.insert(orderAttemptsTable).values({
-    signalId: signal.id,
-    clientOrderId: signal.clientOrderId,
-    success,
-    result,
-  });
 };
 
 async function closePositionsBySignals(client: USDMClient, signals: Signal[]) {
@@ -94,7 +88,7 @@ async function closePositionsBySignals(client: USDMClient, signals: Signal[]) {
 };
 
 async function openPositionBySignal(client: USDMClient, signal: Signal, price: number, quantity: number, interval: Interval) {
-  const [success, result] = await handleOrder(client.submitNewOrder({
+  await handleOrder(signal, client.submitNewOrder({
     newClientOrderId: signal.clientOrderId,
     symbol: signal.symbol,
     type: "LIMIT",
@@ -105,12 +99,6 @@ async function openPositionBySignal(client: USDMClient, signal: Signal, price: n
     timeInForce: "GTD",
     goodTillDate: goodTillDate(signal.timestamp, ms(interval)),
   }));
-  await db.insert(orderAttemptsTable).values({
-    signalId: signal.id,
-    clientOrderId: signal.clientOrderId,
-    success,
-    result,
-  });
 };
 
 function goodTillDate(timestamp: Date, durationInMs: number): number {
@@ -183,10 +171,20 @@ export async function processSignalsByIds(ids: number[]) {
   await Promise.allSettled(tasks);
 }
 
-async function handleOrder(order: Promise<NewOrderResult>) {
+async function placeOrder(order: Promise<NewOrderResult>) {
   try {
     return [true, await order] as const;
   } catch (error) {
     return [false, serializeError(error)] as const;
   }
+}
+
+async function handleOrder(signal: Signal, order: Promise<NewOrderResult>) {
+  const [success, result] = await placeOrder(order);
+  await db.insert(orderAttemptsTable).values({
+    signalId: signal.id,
+    clientOrderId: signal.clientOrderId,
+    success,
+    result,
+  });
 }
