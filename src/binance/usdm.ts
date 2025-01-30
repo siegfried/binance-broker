@@ -127,6 +127,37 @@ async function openPositionsBySignals(client: USDMClient, signals: Signal[], bud
   return Promise.allSettled(tasks);
 };
 
+async function takeProfitBySignal(client: USDMClient, signal: Signal, price: number, interval: Interval) {
+  await handleOrder(signal, client.submitNewOrder({
+    newClientOrderId: signal.clientOrderId,
+    symbol: signal.symbol,
+    type: "TAKE_PROFIT_MARKET",
+    stopPrice: price,
+    closePosition: "true",
+    side: signal.side === "LONG" ? "SELL" : "BUY",
+    positionSide: signal.side,
+    timeInForce: "GTD",
+    goodTillDate: goodTillDate(signal.timestamp, ms(interval)),
+  }));
+}
+
+async function takeProfitBySignals(client: USDMClient, signals: Signal[], interval: Interval) {
+  const { priceFilterStepMap } = await getExchangeInfo(false);
+
+  const tasks = signals.reduce<Promise<void>[]>((tasks, signal) => {
+    if (isExpired(signal.timestamp, ms(interval))) return tasks;
+    const priceStep = priceFilterStepMap.get(signal.symbol);
+    if (!priceStep) return tasks;
+    const price = parseFloat(formatStep(signal.price, priceStep));
+
+    tasks.push(takeProfitBySignal(client, signal, price, interval));
+
+    return tasks;
+  }, []);
+
+  return Promise.allSettled(tasks);
+}
+
 export function ms(durationStr: Interval) {
   switch (durationStr) {
     case "15m": return 1000 * 60 * 15;
@@ -143,10 +174,12 @@ export function isExpired(timestamp: Date, durationInMs: number): boolean {
 export async function processSignals(client: USDMClient, signals: Signal[], budget: number, interval: Interval) {
   const openSignals = signals.filter((signal) => signal.type === "OPEN");
   const closeSignals = signals.filter((signal) => signal.type === "CLOSE");
+  const takeProfitSignals = signals.filter((signal) => signal.type === "TP");
 
   await Promise.allSettled([
     closePositionsBySignals(client, closeSignals),
     openPositionsBySignals(client, openSignals, budget, interval),
+    takeProfitBySignals(client, takeProfitSignals, interval),
   ]);
 }
 

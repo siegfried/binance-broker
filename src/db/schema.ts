@@ -30,7 +30,7 @@ export const signalsTable = sqliteTable("signal", {
   timestamp: integer({ mode: "timestamp" }).notNull(),
   symbol: text().notNull(),
   price: real().notNull(),
-  type: text({ enum: ["OPEN", "CLOSE"] }).notNull(),
+  type: text({ enum: ["OPEN", "CLOSE", "TP"] }).notNull(),
   side: text({ enum: ["LONG", "SHORT"] }).notNull(),
 }, (table) => ({
   clientOrderIdIndex: index("signal_client_order_id_index").on(table.clientOrderId),
