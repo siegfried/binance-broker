@@ -168,6 +168,8 @@ export function SignalsView(props: { rows: { signal: Signal, account: Account, o
   }, [props.rows, tab, time]);
 
   useEffect(() => {
+    setTime(new Date());
+
     const interval = setInterval(() => {
       setTime(new Date());
     }, 1000);
