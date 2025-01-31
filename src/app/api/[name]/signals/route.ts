@@ -1,6 +1,7 @@
 import { createClientByAccount, processSignals, shouldUseTestnet } from "@/binance/usdm";
 import { db } from "@/db";
 import { accountsTable, signalsInsertSchema, signalsTable } from "@/db/schema";
+import { logError } from "@/error";
 import csv from "@fast-csv/parse";
 import { generateNewOrderId } from "binance";
 import { eq } from "drizzle-orm/sql";
@@ -26,9 +27,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const client = createClientByAccount(account);
     await processSignals(client, signals, account.budget, account.interval);
   } catch (error) {
-    let message;
-    if (error instanceof Error) message = error.message
-    return NextResponse.json({ error: message }, { status: 400 });
+    return NextResponse.json(logError(error), { status: 400 });
   }
   return NextResponse.json({ message: "OK" });
 }

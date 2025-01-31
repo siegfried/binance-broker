@@ -27,3 +27,9 @@ export async function tryAndLogError<T>(promise: Promise<T>) {
 export function resetErrorLogs() {
   errorLogs = [];
 }
+
+export function logError(error: unknown) {
+  const serialized = serializeError(error);
+  errorLogs.unshift({ createdAt: new Date(), error: serialized });
+  return serialized;
+}
