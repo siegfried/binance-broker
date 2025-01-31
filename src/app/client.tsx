@@ -116,7 +116,7 @@ function SignalsTable(props: { rows: AggRows[], outdated: boolean }) {
             <th className="p-2">Type</th>
             <th className="p-2">Side</th>
             <th className="p-2">Account</th>
-            <th className="p-2">Imported At</th>
+            <th className="p-2">Received At</th>
             <th className="p-2">Order</th>
           </tr>
         </thead>
