@@ -35,7 +35,7 @@ pkgs.stdenv.mkDerivation {
     cp src/db/schema.ts $out/src/db
     mkdir -p $out/bin
     cat << EOT > $out/bin/start
-    #! ${pkgs.bash}/bin/bash
+    #! ${lib.getExe pkgs.bash}
     export PATH=${
       lib.makeBinPath [
         pkgs.bash
