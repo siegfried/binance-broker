@@ -55,11 +55,10 @@ function OrderAttemptList(props: { orderAttempts: OrderAttempt[] }) {
   );
   return (
     <div className="space-y-2">
-      {orderAttempts.map(({ id, success, result, createdAt }, index) =>
+      {orderAttempts.map(({ id, status, result, createdAt }, index) =>
         <div key={id} onClick={() => setOpenIndex(index)} className="border rounded-sm divide-y overflow-hidden">
           <div className="p-2 flex flex-row justify-between">
-            {success && <div className="font-bold text-green-500">SUCCEED</div>}
-            {!success && <div className="font-bold text-red-500">FAILED</div>}
+            <div className={`font-bold text-${status === "SUCCESS" ? "green" : "red"}-500`}>{status}</div>
             <div>{createdAt.toLocaleString()}</div>
           </div>
           {openIndex === index && <div className="p-2">
@@ -75,7 +74,7 @@ function OrderAttemptList(props: { orderAttempts: OrderAttempt[] }) {
 export function OrderAttemptView(props: { className?: string, account: Account, signal: Signal, orderAttempts: OrderAttempt[], outdated: boolean }) {
   const { className, signal, orderAttempts, outdated } = props;
   const [modal, setModal] = useState(false);
-  const anySuccess = !!orderAttempts.find(({ success }) => success);
+  const anySuccess = !!orderAttempts.find(({ status }) => status === "SUCCESS");
   return (
     <>
       <button className={className} onClick={() => setModal(true)}>

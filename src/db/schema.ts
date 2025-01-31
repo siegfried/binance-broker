@@ -50,7 +50,7 @@ export const orderAttemptsTable = sqliteTable("order_attempt", {
   createdAt: integer({ mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
   clientOrderId: text("client_order_id"),
 
-  success: integer({ mode: "boolean" }).notNull(),
+  status: text({ enum: ["SUCCESS", "FAILED"] }).notNull(),
   result: text({ mode: "json" }),
 }, (table) => ({
   clientOrderIdIndex: index("order_client_order_id_index").on(table.clientOrderId),

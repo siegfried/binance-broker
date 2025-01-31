@@ -225,7 +225,7 @@ async function handleOrder(signal: Signal, order: Promise<NewOrderResult>) {
   await db.insert(orderAttemptsTable).values({
     signalId: signal.id,
     clientOrderId: signal.clientOrderId,
-    success,
+    status: success ? "SUCCESS" : "FAILED",
     result,
   });
 }
