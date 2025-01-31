@@ -5,7 +5,7 @@ import { ReactNode, useEffect, useMemo, useState } from "react";
 import { clearErrorLogs, deleteOutdatedSignals, handleSignals } from "./actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
-import { XMarkIcon } from "@heroicons/react/24/solid";
+import { ClockIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import type { ErrorLog } from "@/error";
 
 function Portal(props: { children: ReactNode }) {
@@ -111,10 +111,12 @@ function SignalsTable(props: { rows: AggRows[], outdated: boolean }) {
           <tr>
             <th className="p-2">Symbol</th>
             <th className="p-2">Timestamp</th>
+            <th className="p-2">Interval</th>
             <th className="p-2">Price</th>
             <th className="p-2">Type</th>
             <th className="p-2">Side</th>
             <th className="p-2">Account</th>
+            <th className="p-2">Imported At</th>
             <th className="p-2">Order</th>
           </tr>
         </thead>
@@ -122,10 +124,12 @@ function SignalsTable(props: { rows: AggRows[], outdated: boolean }) {
           {rows.map(({ signal, account, orderAttempts }) => (<tr key={signal.id} className="divide-x">
             <td className="p-2">{signal.symbol}</td>
             <td className="p-2">{signal.timestamp.toISOString()}</td>
+            <td className="p-2">{account.interval}</td>
             <td className="p-2 text-right">{signal.price}</td>
             <td className="p-2">{signal.type}</td>
             <td className="p-2">{signal.side}</td>
             <td className="p-2">{account.name}</td>
+            <td className="p-2">{signal.createdAt.toLocaleString()}</td>
             <td>
               <OrderAttemptView
                 className="w-full p-2 text-right"
@@ -196,8 +200,9 @@ export function SignalsView(props: { rows: { signal: Signal, account: Account, o
             Outdated
           </button>
         </div>
-        <div className="p-2 text-lg">
-          {time?.toISOString()}
+        <div className="p-2 flex flex-row space-x-2 items-center">
+          <ClockIcon className="size-4" />
+          <span className="text-lg">{time?.toISOString()}</span>
         </div>
         <form action={deleteOutdatedSignals}>
           <button className="p-2 bg-slate-100 border rounded-sm">Clear Outdated</button>
