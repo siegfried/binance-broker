@@ -53,7 +53,7 @@ export async function getExchangeInfo(refresh: boolean) {
 }
 
 export function shouldUseTestnet(): boolean {
-  return process.env.BINANCE_TESTNET === "YES";
+  return process.env.BINANCE_TESTNET! === "YES";
 }
 
 async function closePositionBySignal(client: USDMClient, signal: Signal, quantity: number) {

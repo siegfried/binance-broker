@@ -1,9 +1,5 @@
 'use server'
 
-import { getExchangeInfo } from "@/binance/usdm";
-import { redirect } from "next/navigation";
+import { getExchangeInfo as _getExchangeInfo } from "@/binance/usdm";
 
-export async function refreshExchangeInfo() {
-  await getExchangeInfo(true);
-  redirect("/exchange-info");
-}
+export const getExchangeInfo = _getExchangeInfo;
