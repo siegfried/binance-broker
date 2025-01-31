@@ -28,6 +28,7 @@ pkgs.stdenv.mkDerivation {
     ln -s ${deps}/node_modules $out
     cp -r .next $out
     cp -r public $out
+    cp -r drizzle $out
     cp package.json $out
     cp drizzle.config.ts $out
     mkdir -p $out/src/db
