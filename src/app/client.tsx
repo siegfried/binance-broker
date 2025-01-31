@@ -1,8 +1,8 @@
 'use client'
 
 import type { Account, OrderAttempt, Signal } from "@/db/schema";
-import { ReactNode, useEffect, useMemo, useState } from "react";
-import { clearErrorLogs, deleteOutdatedSignals, handleSignals } from "./actions";
+import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { clearErrorLogs, deleteOutdatedSignals, fetchSignals, processSignalsByIds } from "./actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
 import { ClockIcon, XMarkIcon } from "@heroicons/react/24/solid";
@@ -71,10 +71,20 @@ function OrderAttemptList(props: { orderAttempts: OrderAttempt[] }) {
   )
 }
 
-export function OrderAttemptView(props: { className?: string, account: Account, signal: Signal, orderAttempts: OrderAttempt[], outdated: boolean }) {
+type DBRow = { signal: Signal, account: Account, orderAttempt: OrderAttempt | null };
+const RowsContext = createContext<((rows: DBRow[]) => void)>(() => { });
+type AggRow = { signal: Signal, account: Account, orderAttempts: OrderAttempt[] };
+export function OrderAttemptView(props: AggRow & { className?: string, outdated: boolean }) {
   const { className, signal, orderAttempts, outdated } = props;
   const [modal, setModal] = useState(false);
+  const setRows = useContext(RowsContext);
   const anySuccess = !!orderAttempts.find(({ status }) => status === "SUCCESS");
+  const onRetry = useCallback(async () => {
+    await processSignalsByIds([signal.id])
+    const rows = await fetchSignals();
+    setRows(rows);
+  }, [setRows, signal.id])
+
   return (
     <>
       <button className={className} onClick={() => setModal(true)}>
@@ -86,12 +96,11 @@ export function OrderAttemptView(props: { className?: string, account: Account, 
         <div className="p-4 space-y-2 text-sm">
           <OrderAttemptList orderAttempts={orderAttempts} />
           <div className="flex flex-row justify-end space-x-2">
-            <form action={handleSignals}>
-              <input name="id" type="hidden" value={signal.id} />
-              {!outdated && <button className="p-2 bg-slate-100 rounded-sm disabled:text-gray-500">
-                Retry
-              </button>}
-            </form>
+            {!outdated && <button
+              onClick={onRetry}
+              className="p-2 bg-slate-100 rounded-sm disabled:text-gray-500">
+              Retry
+            </button>}
           </div>
         </div>
       </Modal>}
@@ -99,8 +108,7 @@ export function OrderAttemptView(props: { className?: string, account: Account, 
   )
 }
 
-type AggRows = { signal: Signal, account: Account, orderAttempts: OrderAttempt[] };
-function SignalsTable(props: { rows: AggRows[], outdated: boolean }) {
+function SignalsTable(props: { rows: AggRow[], outdated: boolean }) {
   const { rows, outdated } = props;
   if (rows.length <= 0) return;
   return (
@@ -144,14 +152,16 @@ function SignalsTable(props: { rows: AggRows[], outdated: boolean }) {
   )
 }
 
-export function SignalsView(props: { rows: { signal: Signal, account: Account, orderAttempt: OrderAttempt | null }[] }) {
+export function SignalsView() {
+  const [rows, setRows] = useState<DBRow[] | undefined>();
   const [time, setTime] = useState<Date | undefined>();
   const [tab, setTab] = useState<"current" | "outdated">("current");
-  const rows = useMemo(() => {
+  const groupedRows = useMemo(() => {
     if (!time) return;
+    if (!rows) return;
 
     const aggRows =
-      props.rows.reduce<Map<number, AggRows>>((acc, row) => {
+      rows.reduce<Map<number, AggRow>>((acc, row) => {
         const { account, signal, orderAttempt } = row;
         const expired = isExpired(signal.timestamp, time, ms(account.interval));
 
@@ -169,7 +179,11 @@ export function SignalsView(props: { rows: { signal: Signal, account: Account, o
       }, new Map())
 
     return Array.from(aggRows.values())
-  }, [props.rows, tab, time]);
+  }, [rows, tab, time]);
+
+  useEffect(() => {
+    fetchSignals().then(setRows);
+  }, []);
 
   useEffect(() => {
     setTime(new Date());
@@ -182,7 +196,7 @@ export function SignalsView(props: { rows: { signal: Signal, account: Account, o
   }, [])
 
   if (!time) return;
-  if (!rows) return;
+  if (!groupedRows) return;
 
   return (
     <div className="space-y-2">
@@ -207,7 +221,9 @@ export function SignalsView(props: { rows: { signal: Signal, account: Account, o
           <button className="p-2 bg-slate-100 border rounded-sm">Clear Outdated</button>
         </form>
       </div>
-      <SignalsTable rows={rows} outdated={tab === "outdated"} />
+      <RowsContext.Provider value={setRows}>
+        <SignalsTable rows={groupedRows} outdated={tab === "outdated"} />
+      </RowsContext.Provider>
     </div>
   )
 }

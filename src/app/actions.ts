@@ -2,18 +2,12 @@
 
 import { isExpired, ms, processSignalsByIds } from "@/binance/usdm";
 import { db } from "@/db";
-import { accountsTable, signalsTable } from "@/db/schema";
+import { accountsTable, orderAttemptsTable, signalsTable } from "@/db/schema";
 import { redirect } from "next/navigation";
-import { z } from "zod";
-import { eq, inArray } from "drizzle-orm";
+import { desc, eq, inArray } from "drizzle-orm";
 import { resetErrorLogs } from "@/error";
 
-export async function handleSignals(formData: FormData) {
-  const idsParsed = z.array(z.coerce.number()).safeParse(formData.getAll("id"));
-  if (!idsParsed.success) redirect("/");
-  processSignalsByIds(idsParsed.data);
-  redirect("/");
-}
+export { processSignalsByIds };
 
 export async function deleteOutdatedSignals() {
   const rows = await db
@@ -34,4 +28,13 @@ export async function deleteOutdatedSignals() {
 export async function clearErrorLogs() {
   resetErrorLogs()
   redirect("/");
+}
+
+export async function fetchSignals() {
+  return await db
+    .select({ account: accountsTable, signal: signalsTable, orderAttempt: orderAttemptsTable })
+    .from(signalsTable)
+    .innerJoin(accountsTable, eq(signalsTable.accountId, accountsTable.id))
+    .leftJoin(orderAttemptsTable, eq(signalsTable.clientOrderId, orderAttemptsTable.clientOrderId))
+    .orderBy(desc(signalsTable.timestamp), desc(orderAttemptsTable.id));
 }
