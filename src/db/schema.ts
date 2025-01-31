@@ -33,6 +33,7 @@ export const signalsTable = sqliteTable("signal", {
   type: text({ enum: ["OPEN", "CLOSE", "TP"] }).notNull(),
   side: text({ enum: ["LONG", "SHORT"] }).notNull(),
 }, (table) => ({
+  accountIdIndex: index("signal_account_id_index").on(table.accountId),
   clientOrderIdIndex: index("signal_client_order_id_index").on(table.clientOrderId),
   timestampIndex: index("signal_timestamp_index").on(table.timestamp)
 }));
@@ -53,6 +54,7 @@ export const orderAttemptsTable = sqliteTable("order_attempt", {
   status: text({ enum: ["SUCCESS", "FAILED"] }).notNull(),
   result: text({ mode: "json" }),
 }, (table) => ({
+  signalIdIndex: index("order_attempt_signal_id_index").on(table.signalId),
   clientOrderIdIndex: index("order_client_order_id_index").on(table.clientOrderId),
 }));
 
