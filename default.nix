@@ -5,8 +5,7 @@ let
   pname = "binance-broker";
   version = "0.1.0";
   lib = pkgs.lib;
-  nodejs = pkgs.nodejs-slim;
-  npm = pkgs.nodePackages.npm;
+  nodejs = pkgs.nodejs;
   deps = pkgs.importNpmLock.buildNodeModules {
     npmRoot = ./.;
     inherit nodejs;
@@ -16,10 +15,12 @@ pkgs.stdenv.mkDerivation {
   inherit pname version;
   src = ./.;
 
+  buildInputs = [ nodejs ];
+
   buildPhase = ''
     rm -rf node_modules
     ln -s ${deps}/node_modules .
-    ${lib.getExe npm} run build
+    npm run build
   '';
 
   installPhase = ''
@@ -35,10 +36,9 @@ pkgs.stdenv.mkDerivation {
     cat << EOT > $out/bin/start
     #! ${pkgs.bash}/bin/bash
     export PATH=${
-      pkgs.lib.makeBinPath [
+      lib.makeBinPath [
         pkgs.bash
         nodejs
-        npm
       ]
     }:\$PATH
     npx drizzle-kit migrate
