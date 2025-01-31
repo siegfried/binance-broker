@@ -72,3 +72,7 @@ export async function deleteAccount(formData: FormData) {
   }
   redirect("/accounts");
 }
+
+export async function fetchAccounts() {
+  return await db.select().from(accountsTable);
+}

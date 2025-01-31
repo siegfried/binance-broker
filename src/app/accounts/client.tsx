@@ -1,8 +1,8 @@
 'use client'
 
 import Form from 'next/form';
-import { createAccount, deleteAccount, updateAccount } from './actions';
-import { ReactNode, useActionState, useState } from 'react';
+import { createAccount, deleteAccount, fetchAccounts, updateAccount } from './actions';
+import { ReactNode, useActionState, useEffect, useState } from 'react';
 import type { Account } from '@/db/schema';
 import { Modal } from '../client';
 
@@ -23,6 +23,20 @@ export function NewAccountButton(props: { className?: string, children: ReactNod
         </div>
       </Modal>}
     </>
+  )
+}
+
+export function AccountsList() {
+  const [accounts, setAccounts] = useState<Account[] | undefined>();
+  useEffect(() => {
+    fetchAccounts().then(setAccounts);
+  }, [])
+
+  if (!accounts) return;
+  return (
+    <div className="grid grid-cols-3 gap-4">
+      {accounts.map((account) => <AccountView key={account.id} account={account} />)}
+    </div>
   )
 }
 
