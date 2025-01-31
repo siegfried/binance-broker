@@ -6,6 +6,7 @@ import { accountsTable, signalsTable } from "@/db/schema";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { eq, inArray } from "drizzle-orm";
+import { resetErrorLogs } from "@/error";
 
 export async function handleSignals(formData: FormData) {
   const idsParsed = z.array(z.coerce.number()).safeParse(formData.getAll("id"));
@@ -27,5 +28,10 @@ export async function deleteOutdatedSignals() {
     return ids;
   }, []);
   await db.delete(signalsTable).where(inArray(signalsTable.id, ids));
+  redirect("/");
+}
+
+export async function clearErrorLogs() {
+  resetErrorLogs()
   redirect("/");
 }

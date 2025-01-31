@@ -1,6 +1,6 @@
 import { serializeError } from "serialize-error";
 
-type ErrorLog = {
+export type ErrorLog = {
   createdAt: Date,
   error: unknown,
 }
@@ -19,7 +19,7 @@ export async function tryAndLogError<T>(promise: Promise<T>) {
   const returned = await tryExec(promise);
   const [success, result] = returned;
   if (!success) {
-    errorLogs.push({ createdAt: new Date(), error: result });
+    errorLogs.unshift({ createdAt: new Date(), error: result });
   }
   return returned;
 }

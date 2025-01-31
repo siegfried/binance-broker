@@ -1,3 +1,7 @@
+'use server'
+
+import { errorLogs } from "@/error";
+import { ViewErrorsButton } from "./client";
 import "./globals.css";
 import Link from "next/link";
 
@@ -5,15 +9,18 @@ function Navbar() {
   return (
     <div className="max-w-(--breakpoint-lg) mx-auto">
       <nav className="flex flex-row">
-        <Link className="p-4" href={"/"}>Home</Link>
+        <Link className="p-4" href={"/"}>Dashboard</Link>
         <Link className="p-4" href={"/accounts"}>Account</Link>
         <Link className="p-4" href={"/exchange-info"}>Exchange Info</Link>
+        <ViewErrorsButton errorLogs={errorLogs} className="p-4">
+          Errors
+        </ViewErrorsButton>
       </nav>
     </div>
   )
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

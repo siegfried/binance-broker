@@ -2,10 +2,11 @@
 
 import type { Account, OrderAttempt, Signal } from "@/db/schema";
 import { ReactNode, useEffect, useMemo, useState } from "react";
-import { deleteOutdatedSignals, handleSignals } from "./actions";
+import { clearErrorLogs, deleteOutdatedSignals, handleSignals } from "./actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
 import { XMarkIcon } from "@heroicons/react/24/solid";
+import type { ErrorLog } from "@/error";
 
 function Portal(props: { children: ReactNode }) {
   const { children } = props;
@@ -204,5 +205,35 @@ export function SignalsView(props: { rows: { signal: Signal, account: Account, o
       </div>
       <SignalsTable rows={rows} outdated={tab === "outdated"} />
     </div>
+  )
+}
+
+export function ViewErrorsButton(props: { className?: string, children?: ReactNode, errorLogs: ErrorLog[] }) {
+  const { className, children, errorLogs } = props;
+  const [modal, setModal] = useState(false);
+  const [openIndex, setOpenIndex] = useState(0);
+  if (errorLogs.length <= 0) return;
+  return (
+    <>
+      <button onClick={() => setModal(true)} className={className}>{children}</button>
+      {modal && <Modal onCancel={() => setModal(false)}>
+        <div className="p-4 text-xs space-y-4">
+          <ul className="space-y-2">
+            {errorLogs.map((errorLog, index) =>
+              <li onClick={() => setOpenIndex(index)} className="border rounded-sm divide-y" key={index}>
+                <div className="p-2 text-right">{errorLog.createdAt.toLocaleString()}</div>
+                {openIndex === index && <div className="p-2">
+                  <code className="font-mono">
+                    <pre className="max-h-64 overflow-auto">{JSON.stringify(errorLog.error, null, 2)}</pre>
+                  </code>
+                </div>}
+              </li>)}
+          </ul>
+          <form action={clearErrorLogs} className="flex flex-row justify-end">
+            <button className="p-2 border rounded-sm bg-slate-100">Clear All</button>
+          </form>
+        </div>
+      </Modal>}
+    </>
   )
 }
