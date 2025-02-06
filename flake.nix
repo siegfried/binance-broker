@@ -109,9 +109,7 @@
               group = config.services.binance-broker.group;
             };
 
-            users.groups.${config.services.binance-broker.group} = {
-              isSystemGroup = true;
-            };
+            users.groups.${config.services.binance-broker.group} = { };
 
             systemd.services.binance-broker = {
               description = "Binance Broker";
