@@ -2,14 +2,8 @@
   description = "Binance Broker";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs?ref=nixos-24.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-24.11";
     flake-utils.url = "github:numtide/flake-utils";
-    gitignore = {
-      url = "github:hercules-ci/gitignore.nix";
-      # Use the same nixpkgs
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
-    flake-compat.url = "https://flakehub.com/f/edolstra/flake-compat/1.tar.gz";
   };
 
   outputs =
@@ -17,39 +11,30 @@
       self,
       nixpkgs,
       flake-utils,
-      gitignore,
-      flake-compat,
     }:
     flake-utils.lib.eachDefaultSystem (
       system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        pname = "binance-broker";
-        version = "0.1.0";
-        nodejs = pkgs.nodejs;
-        deps = pkgs.importNpmLock.buildNodeModules {
-          npmRoot = ./.;
-          inherit nodejs;
-        };
+        pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
-        inherit (gitignore.lib) gitignoreSource;
+        nodejs = pkgs.nodejs;
       in
       {
         packages = {
-          default = pkgs.stdenv.mkDerivation {
-            inherit pname version;
-            src = gitignoreSource ./.;
-
+          default = pkgs.buildNpmPackage {
+            pname = "binance-broker";
+            version = "0.1.0";
+            src = ./.;
             buildInputs = [ nodejs ];
+            npmDepsHash = "sha256-WdvjaoZn87bEY8ngJys1iZlqjBz1EVX3DN2Jct95GP8=";
 
             buildPhase = ''
-              ln -s ${deps}/node_modules .
               npm run build
             '';
 
             installPhase = ''
               mkdir -p $out
-              ln -s ${deps}/node_modules $out
+              cp -r node_modules $out
               cp -r .next $out
               cp -r public $out
               cp -r drizzle $out
