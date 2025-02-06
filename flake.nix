@@ -130,7 +130,7 @@
                 Environment = [
                   "HOME=/var/cache/binance-broker"
                   "DB_FILE_NAME=file:/var/lib/binance-broker/database.sqlite"
-                  "PORT=${config.services.binance-broker.port}"
+                  "PORT=${toString config.services.binance-broker.port}"
                 ];
                 Restart = "on-failure";
                 User = config.services.binance-broker.user;
