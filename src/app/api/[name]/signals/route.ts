@@ -2,7 +2,7 @@ import { createClientByAccount, processSignals, shouldUseTestnet } from "@/binan
 import { db } from "@/db";
 import { accountsTable, signalsInsertSchema, signalsTable } from "@/db/schema";
 import { logError } from "@/error";
-import csv from "@fast-csv/parse";
+import { parseString } from "@fast-csv/parse";
 import { generateNewOrderId } from "binance";
 import { eq } from "drizzle-orm/sql";
 import { NextRequest, NextResponse } from "next/server";
@@ -35,8 +35,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 async function parseCSV(accountId: number, text: string): Promise<InsertSchema[]> {
   return new Promise((resolve, reject) => {
     const signals: InsertSchema[] = [];
-    csv
-      .parseString(text, { headers: true })
+    parseString(text, { headers: true })
       .on("data", (row) => {
         const clientOrderId = generateNewOrderId(shouldUseTestnet() ? "usdmtest" : "usdm");
         const signal = signalsInsertSchema.parse({

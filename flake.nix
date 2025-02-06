@@ -58,6 +58,10 @@
             '';
           };
         };
+
+        devShells.default = pkgs.mkShell {
+          packages = [ nodejs ];
+        };
       }
     );
 }
