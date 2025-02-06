@@ -73,5 +73,71 @@
           };
         }
       );
+
+      nixosModules.default =
+        {
+          config,
+          pkgs,
+          lib,
+          ...
+        }:
+        {
+          options = {
+            services.binance-broker = {
+              enable = lib.mkEnableOption "Enable Binance Broker service";
+              port = lib.mkOption {
+                type = lib.types.port;
+                default = 7000;
+                description = "Port on which Binance Broker listens.";
+              };
+              user = lib.mkOption {
+                type = lib.types.str;
+                default = "binance-broker";
+                description = "User to run the service as.";
+              };
+              group = lib.mkOption {
+                type = lib.types.str;
+                default = "binance-broker";
+                description = "Group to run the service as.";
+              };
+            };
+          };
+
+          config = lib.mkIf config.services.binance-broker.enable {
+            users.users.${config.services.binance-broker.user} = {
+              isSystemUser = true;
+              group = config.services.binance-broker.group;
+            };
+
+            users.groups.${config.services.binance-broker.group} = {
+              isSystemGroup = true;
+            };
+
+            systemd.services.binance-broker = {
+              description = "Binance Broker";
+              script = ''
+                ${self.packages.${pkgs.system}.default}/bin/start
+              '';
+              after = [ "network.target" ];
+              wantedBy = [ "multi-user.target" ];
+              serviceConfig = {
+                Type = "exec";
+                WorkingDirectory = self.packages.${pkgs.system}.default;
+                StateDirectory = "binance-broker";
+                StateDirectoryMode = "0700";
+                CacheDirectory = "binance-broker";
+                CacheDirectoryMode = "0700";
+                Environment = [
+                  "HOME=/var/cache/binance-broker"
+                  "DB_FILE_NAME=file:/var/lib/binance-broker/database.sqlite"
+                  "PORT=${config.services.binance-broker.port}"
+                ];
+                Restart = "on-failure";
+                User = config.services.binance-broker.user;
+                Group = config.services.binance-broker.group;
+              };
+            };
+          };
+        };
     };
 }
