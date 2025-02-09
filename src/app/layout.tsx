@@ -1,9 +1,10 @@
 'use server'
 
 import { errorLogs } from "@/error";
-import { ViewErrorsButton } from "./client";
+import { GlobalSettingsButton, ViewErrorsButton } from "./client";
 import "./globals.css";
 import Link from "next/link";
+import { globalSettings } from "@/settings";
 
 function Navbar() {
   return (
@@ -12,6 +13,7 @@ function Navbar() {
         <Link className="p-4" href={"/"}>Dashboard</Link>
         <Link className="p-4" href={"/accounts"}>Account</Link>
         <Link className="p-4" href={"/exchange-info"}>Exchange Info</Link>
+        <GlobalSettingsButton className="p-4 cursor-pointer" globalSettings={globalSettings}>Global Settings</GlobalSettingsButton>
         <ViewErrorsButton errorLogs={errorLogs} className="p-4">
           Errors
         </ViewErrorsButton>

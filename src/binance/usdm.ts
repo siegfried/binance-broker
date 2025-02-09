@@ -4,14 +4,16 @@ import { FuturesExchangeInfo, NewOrderResult, USDMClient } from "binance";
 import { formatStep } from "./formatStep";
 import { eq, inArray } from "drizzle-orm";
 import { tryAndLogError, tryExec } from "@/error";
+import { globalSettings } from "@/settings";
 
 export function createClientByAccount(account: Account) {
   const api_key = account.apiKey;
   const api_secret = account.secret;
+  const { recvWindow } = globalSettings;
   if (shouldUseTestnet()) {
-    return new USDMClient({ api_key, api_secret, useTestnet: true, baseUrl: "https://testnet.binancefuture.com" });
+    return new USDMClient({ api_key, api_secret, recvWindow, useTestnet: true, baseUrl: "https://testnet.binancefuture.com" });
   } else {
-    return new USDMClient({ api_key, api_secret });
+    return new USDMClient({ api_key, api_secret, recvWindow });
   }
 }
 

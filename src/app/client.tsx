@@ -2,11 +2,12 @@
 
 import type { Account, OrderAttempt, Signal } from "@/db/schema";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { clearErrorLogs, deleteOutdatedSignals, fetchSignals, processSignalsByIds } from "./actions";
+import { clearErrorLogs, deleteOutdatedSignals, fetchSignals, processSignalsByIds, changeGlobalSettings } from "./actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
 import { ClockIcon, XMarkIcon } from "@heroicons/react/24/solid";
 import type { ErrorLog } from "@/error";
+import { GlobalSettings } from "@/settings";
 
 function Portal(props: { children: ReactNode }) {
   const { children } = props;
@@ -255,5 +256,42 @@ export function ViewErrorsButton(props: { className?: string, children?: ReactNo
         </div>
       </Modal>}
     </>
+  )
+}
+
+export function GlobalSettingsButton(props: { className?: string, children?: ReactNode, globalSettings: GlobalSettings }) {
+  const { className, children, globalSettings } = props;
+  const [modal, setModal] = useState(false);
+  return (
+    <>
+      <button onClick={() => setModal(true)} className={className}>{children}</button>
+      {modal && <Modal onCancel={() => setModal(false)}>
+        <div className="p-4 space-y-4">
+          <GlobalSettingsForm globalSettings={globalSettings} />
+        </div>
+      </Modal>}
+    </>
+  )
+}
+
+function GlobalSettingsForm(props: { globalSettings: GlobalSettings }) {
+  const { globalSettings } = props;
+  return (
+    <form className="space-y-2" action={changeGlobalSettings}>
+      <label className='block space-y-1'>
+        <div>recvWindow</div>
+        <input
+          className='block w-full border rounded-sm p-2'
+          name='recvWindow'
+          type='number'
+          required
+          min={1}
+          defaultValue={globalSettings.recvWindow} />
+      </label>
+
+      <div className="flex flex-row justify-end">
+        <button className='block bg-slate-100 rounded-sm p-2' type='submit'>Update</button>
+      </div>
+    </form>
   )
 }

@@ -6,6 +6,7 @@ import { accountsTable, orderAttemptsTable, signalsTable } from "@/db/schema";
 import { redirect } from "next/navigation";
 import { desc, eq, inArray } from "drizzle-orm";
 import { resetErrorLogs } from "@/error";
+import { globalSettings, globalSettingsSchema, updateGlobalSettings } from "@/settings";
 
 export { processSignalsByIds };
 
@@ -37,4 +38,14 @@ export async function fetchSignals() {
     .innerJoin(accountsTable, eq(signalsTable.accountId, accountsTable.id))
     .leftJoin(orderAttemptsTable, eq(signalsTable.clientOrderId, orderAttemptsTable.clientOrderId))
     .orderBy(desc(signalsTable.timestamp), desc(orderAttemptsTable.id));
+}
+
+export async function changeGlobalSettings(formData: FormData) {
+  const settingsParsed = globalSettingsSchema.partial().safeParse({
+    recvWindow: formData.get("recvWindow")
+  })
+  if (settingsParsed.success) {
+    updateGlobalSettings({ ...globalSettings, ...settingsParsed.data })
+  }
+  redirect("/")
 }
