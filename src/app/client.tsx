@@ -29,8 +29,8 @@ export function Modal(props: { children: ReactNode, onCancel?: () => void }) {
   const { children, onCancel } = props;
   return (
     <Portal>
-      <div className="absolute inset-0 bg-black/50">
-        <div className="max-w-3xl mx-auto mt-20 rounded-sm bg-white overflow-hidden">
+      <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+        <div className="md:w-3xl w-screen rounded-sm bg-white overflow-hidden">
           {onCancel && <div className="divide-y">
             <div className="flex flex-row justify-end bg-slate-100">
               <button
