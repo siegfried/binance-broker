@@ -49,3 +49,7 @@ export async function changeGlobalSettings(formData: FormData) {
   }
   redirect("/")
 }
+
+export async function getGlobalSettings() {
+  return globalSettings
+}

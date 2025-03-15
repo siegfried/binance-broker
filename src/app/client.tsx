@@ -2,7 +2,7 @@
 
 import type { Account, OrderAttempt, Signal } from "@/db/schema";
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { clearErrorLogs, deleteOutdatedSignals, fetchSignals, processSignalsByIds, changeGlobalSettings } from "./actions";
+import { clearErrorLogs, deleteOutdatedSignals, fetchSignals, processSignalsByIds, changeGlobalSettings, getGlobalSettings } from "./actions";
 import { isExpired, ms } from "@/binance/usdm";
 import { createPortal } from "react-dom";
 import { ClockIcon, XMarkIcon } from "@heroicons/react/24/solid";
@@ -259,34 +259,39 @@ export function ViewErrorsButton(props: { className?: string, children?: ReactNo
   )
 }
 
-export function GlobalSettingsButton(props: { className?: string, children?: ReactNode, globalSettings: GlobalSettings }) {
-  const { className, children, globalSettings } = props;
+export function GlobalSettingsButton(props: { className?: string, children?: ReactNode }) {
+  const { className, children } = props;
   const [modal, setModal] = useState(false);
   return (
     <>
       <button onClick={() => setModal(true)} className={className}>{children}</button>
       {modal && <Modal onCancel={() => setModal(false)}>
         <div className="p-4 space-y-4">
-          <GlobalSettingsForm globalSettings={globalSettings} />
+          <GlobalSettingsForm />
         </div>
       </Modal>}
     </>
   )
 }
 
-function GlobalSettingsForm(props: { globalSettings: GlobalSettings }) {
-  const { globalSettings } = props;
+function GlobalSettingsForm() {
+  const [globalSettings, setGlobalSettings] = useState<GlobalSettings | undefined>();
+
+  useEffect(() => {
+    getGlobalSettings().then(setGlobalSettings)
+  }, [])
+
   return (
     <form className="space-y-2" action={changeGlobalSettings}>
       <label className='block space-y-1'>
         <div>recvWindow</div>
-        <input
+        {globalSettings && <input
           className='block w-full border rounded-sm p-2'
           name='recvWindow'
           type='number'
           required
           min={1}
-          defaultValue={globalSettings.recvWindow} />
+          defaultValue={globalSettings.recvWindow} />}
       </label>
 
       <div className="flex flex-row justify-end">
